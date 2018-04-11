@@ -1,82 +1,87 @@
 // std imports
 use std::collections::BTreeMap;
-use std::fmt::{Result as fres, Formatter, Display};
+use std::fmt::{Formatter, Display, Result as FormatResult};
+use std::string::ToString;
 
-/// This Enum represents the most common datatypes used in SQL-land
-/// More may be added in the future
+#[derive(Debug)]
+/// Enum representing common SQL-datatypes
 pub enum Value<'c> {
-    /// Rust representation of the SQL VARCHAR
-    Varchar(&'c str),
-    Bool(bool),
-    Tinyint(i8),
-    UnsignedTinyint(u8),
-    Smallint(i16),
-    UnsignedSmallint(u16),
-    Int(i32),
-    UnsignedInt(u32),
-    Bigint(i64),
-    UnsignedBigint(u64),
-}
-
-#[dervice(Debug)]
-impl<'c> Display for Value<'c> {
-    fn fmt(&self, f: &mut Formatter) -> fres {
-        match *self {
-            Value::Varchar(v)           => write!(f, "'{}'", v),
-            Value::Bool(b)              => if b { write!(f, "TRUE") } else { write!(f, "FALSE") },
-            Value::Tinyint(t)           => write!(f, "{}", t),
-            Value::UnsignedTinyint(ut)  => write!(f, "{}", ut),
-            Value::Smallint(s)          => write!(f, "{}", s),
-            Value::UnsignedSmallint(us) => write!(f, "{}", us),
-            Value::Int(i)               => write!(f, "{}", i),
-            Value::UnsignedInt(ui)      => write!(f, "{}", ui),
-            Value::Bigint(bi)           => write!(f, "{}", bi),
-            Value::UnsignedBigint(ubi)  => write!(f, "{}", ubi),
-        }
-    }
+	Varchar(&'c str),
+	Bool(bool),
+	Tinyint(i8),
+	UnsignedTinyint(u8),
+	Smallint(i16),
+	UnsignedSmallint(u16),
+	Int(i32),
+	UnsignedInt(u32),
+	Bigint(i64),
+	UnsignedBigint(u64),
 }
 
 impl<'c> Value<'c> {
-
+	/// Convert the Value to a `String`
+	pub fn to_string(&self) -> String {
+		match *self {
+			Value::Varchar(v)	=> format!("'{}'", v),
+			Value::Bool(b)		=> if b { "TRUE".to_string() } else { "FALSE".to_string() },
+			Value::Tinyint(t)	=> format!("{}", t),
+			Value::UnsignedTinyint(ut) => format!("{}", ut),
+			Value::Smallint(s)	=> format!("{}", s),
+			Value::UnsignedSmallint(us)	=> format!("{}", us),
+			Value::Int(i)		=> format!("{}", i),
+			Value::UnsignedInt(ui)	=> format!("{}", ui),
+			Value::Bigint(bi)	=> format!("{}", bi),
+			Value::UnsignedBigint(ubi)	=> format!("{}", ubi),
+		}
+	}
 }
 
-/// SQL Insert Query represented as Rust object.
+impl<'c> Display for Value<'c> {
+	fn fmt(&self, f: &mut Formatter) -> FormatResult {
+		write!(f, "{}", self.to_string())
+	}
+}
+
 #[derive(Debug)]
-pub struct InsertQuery<'a, 'c> {
-    into: &'a str,
-    pub values: BTreeMap<&'a str, Value<'c>>,
-    pub whre: BTreeMap<&'a str, Value<'c>>,
-    limit: Option<usize>,
-    s: String;
+/// Rust representation of an SQL Select Query
+pub struct SelectQuery<'a, 'c> {
+	select: Vec<&'a str>,
+	from: &'a str,
+	pub whre: BTreeMap<&'a str, Value<'c>>,
+	limit: Option<usize>
 }
 
-impl<'a, 'c> InsertQuery<'a, 'c> {
-    /// Create a new Query that inserts into `table`
-    pub fn into(table: &'a str) -> InsertQuery {
-        InsertQuery {
-            into: table,
-            values: BTreeMap::new(),
-            whre: BTreeMap::new(),
-            limit: None,
-            s: String::new(),
-        }
-    }
-    /// Set the Limit for the Query to `l`
-    pub fn limit(&mut self, l: usize) {
-        self.limit = Some(l);
-    }
+impl<'a, 'c> SelectQuery<'a, 'c> {
+	/// Creates a new `SelectQuery` that selects data from the row/s `rows`
+	pub fn select(rows: Vec<&'a str>) -> SelectQuery {
+		SelectQuery {
+			select: rows,
+			from: "",
+			whre: BTreeMap::new(),
+			limit: None,
+		}
+	}
 
-    /// Return the limit of the Query, if there is any
-    pub fn get_limit(&self) -> Option<usize> {
-        if let Some(l)  = self.limit {
-            Some(l)
-        } else {
-            None
-        }
-    }
+	/// Sets the table to select from to the value of `t`
+	pub fn from(mut self, t: &'a str) -> Self {
+		self.from = t;
+		self
+	}
 
-    /// Remove the limit from the Query
-    pub fn clear_limit(&mut self) {
-        self.limit = None
-    }
+	/// Sets the limit value of the Query to the value of `l`
+	pub fn limit(&mut self, l: usize) {
+		self.limit = Some(l);
+	}
+
+	/// Removes the limit from the query
+	pub fn clear_limit(&mut self) {
+		self.limit = None;
+	}
+
+	pub fn as_str(&self) -> &str {
+		let res: &str = "",
+		if !self.select.is_empty() {
+			
+		}
+	}
 }
