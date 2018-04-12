@@ -1,10 +1,11 @@
 [package]
 name = "query_builder"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["sitius2"]
 license = "MIT"
 description = "Easy to use library for creating SQL-Statements"
 keywords = ["database", "sql", "queries"]
+homepage = "https://github.com/sitius2/query_builder"
 
 
 [lib]
