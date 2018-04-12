@@ -2,6 +2,9 @@
 name = "query_builder"
 version = "0.1.0"
 authors = ["sitius2 <leon@schnartzke.de>"]
+license = "MIT"
+description = "Easy to use library for creating SQL-Statements"
+keywords = ["database", "sql", "queries"]
 
 
 [lib]
