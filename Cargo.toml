@@ -3,4 +3,9 @@ name = "query_builder"
 version = "0.1.0"
 authors = ["sitius2 <leon@schnartzke.de>"]
 
+
+[lib]
+path = "src/lib.rs"
+name = "query_builder"
+
 [dependencies]
