@@ -18,7 +18,5 @@ name = "query_builder"
 
 [dependencies]
 
-[badges]
-
 [badges.maintenance]
 status = "actively-developed"
