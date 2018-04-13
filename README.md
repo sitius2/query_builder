@@ -6,7 +6,7 @@ This is a Library written in pure Rust intended to be easy to use for creating S
 This is also a project I mainly started to improve my Rust skills. 
 
 # Usage
-In order to use this library add the line `query_builder = "0.1.1"` to the `[dependencies]` section of your `Cargo.toml`.
+In order to use this library add the line `query_builder = "*"` to the `[dependencies]` section of your `Cargo.toml`.
 Then in your code you can use `extern crate query_builder;` and access it with `use query_builder::query_builder` (yes, that is currently very poor written and I will change this as soon as possible).
 
 Creating a basic query that selects data from a table you can use the following code: 
