@@ -71,6 +71,12 @@ pub mod query_builder {
         s: String,
     }
 
+    impl<'a, 'c> Display for SelectQuery<'a, 'c> {
+        fn fmt(&self, f: &mut Formatter) -> FormatResult {
+            write!(f, "{}", self.as_string())
+        }
+    }
+
     impl<'a, 'c> SelectQuery<'a, 'c> {
         /// Creates a new `SelectQuery` that selects data from the row/s `rows`
         pub fn select(rows: &[&'a str]) -> SelectQuery<'a, 'c> {
@@ -114,11 +120,11 @@ pub mod query_builder {
         /// assert!(!q.has_limit);
         /// ```
         pub fn has_limit(&self) -> bool {
-        	if let Some(_) = self.limit {
-        		return true;
-        	}
+            if let Some(_) = self.limit {
+                return true;
+            }
 
-        	false
+            false
         }
 
         /// Returns the value of the Limit of the `SelectQuery` if there is one
@@ -129,7 +135,7 @@ pub mod query_builder {
         /// assert_eq!(q.get_limit(), Some(12));
         /// ```
         pub fn get_limit(&self) -> Option<usize> {
-        	self.limit
+            self.limit
         }
 
         /// Removes the limit from the query
@@ -183,12 +189,8 @@ pub mod query_builder {
         }
     }
 
-    impl<'a, 'c> Display for SelectQuery<'a, 'c> {
-        fn fmt(&self, f: &mut Formatter) -> FormatResult {
-            write!(f, "{}", self.as_string())
-        }
-    }
 
+    #[derive(Debug)]
     /// Struct representing an SQL Insert Statement
     pub struct InsertQuery<'a> {
         into: &'a str,
@@ -196,13 +198,13 @@ pub mod query_builder {
     }
 
     impl<'a> Display for InsertQuery<'a> {
-    	fn fmt(&self, f: &mut Formatter) -> FormatResult {
-    		write!(f, "{}", self.as_string())
-    	}
+        fn fmt(&self, f: &mut Formatter) -> FormatResult {
+            write!(f, "{}", self.as_string())
+        }
     }
 
     impl<'a> InsertQuery<'a> {
-    	/// Creates a new `InsertQuery` that inserts data in table specified by `table`
+        /// Creates a new `InsertQuery` that inserts data in table specified by `table`
         pub fn into(table: &'a str) -> InsertQuery<'a> {
             InsertQuery {
                 into: table,
@@ -211,7 +213,7 @@ pub mod query_builder {
         }
 
         /// Returns a `String` that represents the `InsertQuery` in a valid SQL statement
-        /// 
+        ///
         /// ```ignore
         /// let mut q = InsertQuery::into("users");
         /// q.values.insert("name", Value::Varchar("greg"));
@@ -240,132 +242,146 @@ pub mod query_builder {
         }
     }
 
+    #[derive(Debug)]
     /// Struct representing a SQL Delete Statement
     pub struct DeleteQuery<'a, 'c> {
-    	from: &'a str,
-    	pub whre: BTreeMap<&'a str, Value<'c>>,
-    	limit: Option<usize>
+        from: &'a str,
+        pub whre: BTreeMap<&'a str, Value<'c>>,
+        limit: Option<usize>,
+    }
+
+    impl<'a, 'c> Display for DeleteQuery<'a, 'c> {
+        fn fmt(&self, f: &mut Formatter) -> FormatResult {
+            write!(f, "{}", self.as_string())
+        }
     }
 
     impl<'a, 'c> DeleteQuery<'a, 'c> {
-    	/// Return a new `DeleteQuery` that deletes data from table `table`
-    	pub fn from(table: &'a str) -> DeleteQuery {
-    		DeleteQuery {
-    			from: table,
-    			whre: BTreeMap::new(),
-    			limit: None
-    		}
-    	}
+        /// Return a new `DeleteQuery` that deletes data from table `table`
+        pub fn from(table: &'a str) -> DeleteQuery {
+            DeleteQuery {
+                from: table,
+                whre: BTreeMap::new(),
+                limit: None,
+            }
+        }
 
-    	/// Sets the limit of items to delete
-    	pub fn limit(&mut self, limit: usize) {
-    		self.limit = Some(limit);
-    	}
+        /// Sets the limit of items to delete
+        pub fn limit(&mut self, limit: usize) {
+            self.limit = Some(limit);
+        }
 
-    	/// Returns the limit of the `DeleteQuery`
-    	pub fn get_limit(&self) -> Option<usize> {
-    		self.limit
-    	}
+        /// Returns the limit of the `DeleteQuery`
+        pub fn get_limit(&self) -> Option<usize> {
+            self.limit
+        }
 
-    	/// Removes the limit from the `DeleteQuery`
-    	pub fn clear_limit(&mut self) {
-    		self.limit = None;
-    	}
+        /// Removes the limit from the `DeleteQuery`
+        pub fn clear_limit(&mut self) {
+            self.limit = None;
+        }
 
-    	/// Return a `String` representing the struct
-    	pub fn as_string(&self) -> String {
-    		let mut res = String::new();
+        /// Return a `String` representing the struct
+        pub fn as_string(&self) -> String {
+            let mut res = String::new();
 
-    		res = format!("DELETE FROM {}", self.from);
+            res = format!("DELETE FROM {}", self.from);
 
-    		if !self.whre.is_empty() {
-    			let mut keys = self.whre.keys();
-    			let key = keys.next().unwrap();
-    			res = format!("{} WHERE {} = {}", res, key, self.whre[key]);
-    			for k in keys {
-    				res = format!("{} AND {} = {}", res, k, self.whre[k]);
-    			}
-    		}
+            if !self.whre.is_empty() {
+                let mut keys = self.whre.keys();
+                let key = keys.next().unwrap();
+                res = format!("{} WHERE {} = {}", res, key, self.whre[key]);
+                for k in keys {
+                    res = format!("{} AND {} = {}", res, k, self.whre[k]);
+                }
+            }
 
-    		if let Some(l) = self.limit {
-    			res = format!("{} LIMIT {}", res, l);
-    		}
+            if let Some(l) = self.limit {
+                res = format!("{} LIMIT {}", res, l);
+            }
 
-    		res
-    	}
+            res
+        }
     }
 
+    #[derive(Debug)]
     /// Struct representing an SQL Update statement
     pub struct UpdateQuery<'a, 'c> {
-    	update: &'a str,
-    	pub set: BTreeMap<&'a str, Value<'c>>,
-    	pub whre: BTreeMap<&'a str, Value<'c>>,
-    	limit: Option<usize>
+        update: &'a str,
+        pub set: BTreeMap<&'a str, Value<'c>>,
+        pub whre: BTreeMap<&'a str, Value<'c>>,
+        limit: Option<usize>,
+    }
+
+    impl<'a, 'c> Display for UpdateQuery<'a, 'c> {
+        fn fmt(&self, f: &mut Formatter) -> FormatResult {
+            write!(f, "{}", self.as_string())
+        }
     }
 
     impl<'a, 'c> UpdateQuery<'a, 'c> {
-    	/// Returns a new `UpdateQuery` that updates the table `table`
-    	pub fn update(table: &'a str) -> UpdateQuery {
-    		UpdateQuery {
-    			update: table,
-    			set: BTreeMap::new(),
-    			whre: BTreeMap::new(),
-    			limit: None,
-    		}
-    	}
+        /// Returns a new `UpdateQuery` that updates the table `table`
+        pub fn update(table: &'a str) -> UpdateQuery {
+            UpdateQuery {
+                update: table,
+                set: BTreeMap::new(),
+                whre: BTreeMap::new(),
+                limit: None,
+            }
+        }
 
-    	/// Set the limit of the Query to the value of `l`
-    	pub fn limit(&mut self, l: usize) {
-    		self.limit = Some(l);
-    	}
+        /// Set the limit of the Query to the value of `l`
+        pub fn limit(&mut self, l: usize) {
+            self.limit = Some(l);
+        }
 
-    	/// Returns whether or not the `UpdateQuery` has a limit
-    	pub fn has_limit(&self) -> bool {
-    		if let Some(_) = self.limit {
-    			return true;
-    		}
+        /// Returns whether or not the `UpdateQuery` has a limit
+        pub fn has_limit(&self) -> bool {
+            if let Some(_) = self.limit {
+                return true;
+            }
 
-    		false
-    	}
-    	/// Returns the limit of the `UpdateQuery` if there is one
-    	pub fn get_limit(&self) -> Option<usize> {
-    		self.limit
-    	}
+            false
+        }
+        /// Returns the limit of the `UpdateQuery` if there is one
+        pub fn get_limit(&self) -> Option<usize> {
+            self.limit
+        }
 
-    	/// Returns the String representation of the `UpdateQuery`
-    	pub fn as_string(&self) -> String {
-    		let mut res = String::new();
+        /// Returns the String representation of the `UpdateQuery`
+        pub fn as_string(&self) -> String {
+            let mut res = String::new();
 
-    		res = format!("UPDATE {}", self.update);
+            res = format!("UPDATE {}", self.update);
 
-    		if !self.set.is_empty() {
-    			let mut keys = self.set.keys();
-    			let key = keys.next().unwrap();
+            if !self.set.is_empty() {
+                let mut keys = self.set.keys();
+                let key = keys.next().unwrap();
 
-    			res = format!("{} SET {} = {}", res, key, self.set[key]);
+                res = format!("{} SET {} = {}", res, key, self.set[key]);
 
-    			for k in keys {
-    				res = format!("{}, {} = {}", res, k, self.set[k]);
-    			}
-    		}
+                for k in keys {
+                    res = format!("{}, {} = {}", res, k, self.set[k]);
+                }
+            }
 
-    		if !self.whre.is_empty() {
-    			let mut keys = self.whre.keys();
-    			let key = keys.next().unwrap();
+            if !self.whre.is_empty() {
+                let mut keys = self.whre.keys();
+                let key = keys.next().unwrap();
 
-    			res = format!("{} WHERE {} = {}", res, key, self.whre[key]);
+                res = format!("{} WHERE {} = {}", res, key, self.whre[key]);
 
-    			for k in keys {
-    				res = format!("{} AND {} = {}", res, k, self.whre[k]);
-    			}
-    		}
+                for k in keys {
+                    res = format!("{} AND {} = {}", res, k, self.whre[k]);
+                }
+            }
 
-    		if let Some(l)	= self.limit {
-    			res = format!("{} LIMIT {}", res, l);
-    		}
+            if let Some(l) = self.limit {
+                res = format!("{} LIMIT {}", res, l);
+            }
 
-    		res
-    	}
+            res
+        }
     }
 }
 
@@ -412,44 +428,50 @@ mod tests {
 
     #[test]
     fn delete_simple() {
-    	let mut q = DeleteQuery::from("users");
-    	q.whre.insert("name", Value::Varchar("george"));
+        let mut q = DeleteQuery::from("users");
+        q.whre.insert("name", Value::Varchar("george"));
 
-    	assert_eq!(q.as_string(), "DELETE FROM users WHERE name = 'george'")
+        assert_eq!(q.as_string(), "DELETE FROM users WHERE name = 'george'")
     }
 
     #[test]
     fn delete_simple_limit() {
-    	let mut q = DeleteQuery::from("countries");
-    	q.limit(1);
+        let mut q = DeleteQuery::from("countries");
+        q.limit(1);
 
-    	assert_eq!(q.as_string(), "DELETE FROM countries LIMIT 1")
+        assert_eq!(q.as_string(), "DELETE FROM countries LIMIT 1")
     }
 
     #[test]
     fn update_simple() {
-    	let mut q = UpdateQuery::update("users");
-    	q.set.insert("name", Value::Varchar("george"));
+        let mut q = UpdateQuery::update("users");
+        q.set.insert("name", Value::Varchar("george"));
 
-    	assert_eq!(q.as_string(), "UPDATE users SET name = 'george'")
+        assert_eq!(q.as_string(), "UPDATE users SET name = 'george'")
     }
 
     #[test]
     fn update_simple_where() {
-    	let mut q = UpdateQuery::update("users");
-    	q.set.insert("name", Value::Varchar("george"));
-    	q.whre.insert("name", Value::Varchar("steve"));
+        let mut q = UpdateQuery::update("users");
+        q.set.insert("name", Value::Varchar("george"));
+        q.whre.insert("name", Value::Varchar("steve"));
 
-    	assert_eq!(q.as_string(), "UPDATE users SET name = 'george' WHERE name = 'steve'")
+        assert_eq!(
+            q.as_string(),
+            "UPDATE users SET name = 'george' WHERE name = 'steve'"
+        )
     }
 
     #[test]
     fn update_simple_where_limit() {
-    	let mut q = UpdateQuery::update("users");
-    	q.set.insert("name", Value::Varchar("george"));
-    	q.whre.insert("name", Value::Varchar("steve"));
-    	q.limit(1);
+        let mut q = UpdateQuery::update("users");
+        q.set.insert("name", Value::Varchar("george"));
+        q.whre.insert("name", Value::Varchar("steve"));
+        q.limit(1);
 
-    	assert_eq!(q.as_string(), "UPDATE users SET name = 'george' WHERE name = 'steve' LIMIT 1");
+        assert_eq!(
+            q.as_string(),
+            "UPDATE users SET name = 'george' WHERE name = 'steve' LIMIT 1"
+        );
     }
 }
