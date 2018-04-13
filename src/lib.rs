@@ -1,7 +1,3 @@
-#[allow(dead_code)]
-#[allow(unused_assignments)]
-/// Module that provides Functions and structs to easily create SQL-Queries
-
 // std imports
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter, Result as FormatResult};
@@ -20,6 +16,7 @@ pub enum Value<'c> {
     UnsignedBigint(u64),
 }
 
+#[allow(unused_assignments)]
 impl<'c> Value<'c> {
     /// Convert the Value to a `String`
     /// ```ignore
@@ -77,6 +74,8 @@ impl<'a, 'c> Display for SelectQuery<'a, 'c> {
     }
 }
 
+
+#[allow(unused_assignments)]
 impl<'a, 'c> SelectQuery<'a, 'c> {
     /// Creates a new `SelectQuery` that selects data from the row/s `rows`
     pub fn select(rows: &[&'a str]) -> SelectQuery<'a, 'c> {
@@ -203,6 +202,7 @@ impl<'a> Display for InsertQuery<'a> {
     }
 }
 
+#[allow(unused_assignments)]
 impl<'a> InsertQuery<'a> {
     /// Creates a new `InsertQuery` that inserts data in table specified by `table`
     pub fn into(table: &'a str) -> InsertQuery<'a> {
@@ -256,6 +256,7 @@ impl<'a, 'c> Display for DeleteQuery<'a, 'c> {
     }
 }
 
+#[allow(unused_assignments)]
 impl<'a, 'c> DeleteQuery<'a, 'c> {
     /// Return a new `DeleteQuery` that deletes data from table `table`
     pub fn from(table: &'a str) -> DeleteQuery {
@@ -319,6 +320,7 @@ impl<'a, 'c> Display for UpdateQuery<'a, 'c> {
     }
 }
 
+#[allow(unused_assignments)]
 impl<'a, 'c> UpdateQuery<'a, 'c> {
     /// Returns a new `UpdateQuery` that updates the table `table`
     pub fn update(table: &'a str) -> UpdateQuery {

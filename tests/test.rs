@@ -5,7 +5,7 @@ mod tests {
 	use self::query_builder::*;
 	#[test]
     fn select_simple() {
-        let mut q = SelectQuery::select(&["user"]).from("users");
+        let q = SelectQuery::select(&["user"]).from("users");
 
         assert_eq!(q.as_string(), "SELECT user FROM users")
     }
