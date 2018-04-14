@@ -1,3 +1,44 @@
+//! # About
+//! This crate is intended to be easy to use for creating
+//! SQL-Queries dynamically as you need it.
+//!
+//! # Usage
+//! For creating a simple SELECT-Query you first need to add
+//! `query_builder = "*"` to your `Cargo.toml` file (you may of cource replace * with any version)<br>
+//! In your code write `extern crate query_builder` and `use query_builder::*` to
+//! import all structs and enums. <br>
+//! Finally creating the [`SelectQuery`] looks like this:
+//! ```no_run
+//! extern crate query_builder;
+//! use query_builder::SelectQuery;
+//!
+//! let query = SelectQuery::select(&["*"]).from("users");
+//! // make sure the query looks like expected
+//! assert_eq!(query.as_string(), "SELECT * FROM users");
+//! ```
+//! <br>
+//! Creating a [`InsertQuery`] works similar:
+//! ```no_run
+//! extern crate query_buider;
+//! use query_builder::{InsertQuery, Value};
+//!
+//! // create the basic query
+//! let mut query = InsertQuery::into("users");
+//! // add values to the query
+//! query.values.insert("name", Value::Varchar("george"));
+//!
+//! // make sure that the query looks like expected
+//! assert_eq!(query.as_string(), "INSERT INTO users(name) VALUES('george')");
+//! ```
+//! <br>
+//! More detailed explanations and examples can be found at the corresponding sections
+//! to the structs and enums
+//!
+//! [`SelectQuery`]: ./struct.SelectQuery.html
+//! [`InsertQuery`]: ./struct.InsertQuery.html
+//! [`Value`]: ./enum.Value.html
+
+
 // std imports
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter, Result as FormatResult};
@@ -19,7 +60,9 @@ pub enum Value<'c> {
 #[allow(unused_assignments)]
 impl<'c> Value<'c> {
     /// Convert the Value to a `String`
-    /// ```ignore
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::Value;
     /// // Put single quotes around the varchar to not conflict with e.g. MySQL when inserting data
     /// let v = Value::Varchar("steven");
     /// assert_eq!(v.as_string(), "'steven'");
@@ -59,13 +102,23 @@ impl<'c> Display for Value<'c> {
 }
 
 #[derive(Debug)]
-/// Rust representation of an SQL Select Query
+/// Struct representing a SQL-INSERT Query
+/// A simple query to select everything from a table can be created like this:
+/// ```no_run
+/// extern crate query_builder;
+/// use query_builder::SelectQuery;
+///
+/// // create the query
+/// let query = SelectQuery::select(&[*]).from("users");
+///
+/// // make sure it looks like you would expect it to look
+/// assert_eq!(query.as_string(), "SELECT * FROM users");
+/// ```
 pub struct SelectQuery<'a, 'c> {
     select: Vec<&'a str>,
     from: &'a str,
     pub whre: BTreeMap<&'a str, Value<'c>>,
     limit: Option<usize>,
-    s: String,
 }
 
 impl<'a, 'c> Display for SelectQuery<'a, 'c> {
@@ -77,19 +130,25 @@ impl<'a, 'c> Display for SelectQuery<'a, 'c> {
 
 #[allow(unused_assignments)]
 impl<'a, 'c> SelectQuery<'a, 'c> {
-    /// Creates a new `SelectQuery` that selects data from the row/s `rows`
+    /// Creates a new [`SelectQuery`] that selects data from the row/s `rows`
+    ///
+    /// [`SelectQuery`]: ./struct.SelectQuery.html
+    ///
     pub fn select(rows: &[&'a str]) -> SelectQuery<'a, 'c> {
         SelectQuery {
             select: rows.to_vec(),
             from: "",
             whre: BTreeMap::new(),
             limit: None,
-            s: String::new(),
         }
     }
 
     /// Sets the table to select from to the value of `t`
-    /// ```ignore
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::SelectQuery;
+    ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
     ///
     /// assert_eq!(q.as_string(), "SELECT user FROM users")
@@ -98,9 +157,12 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         self.from = t;
         self
     }
-
     /// Sets the limit value of the Query to the value of `l`
-    /// ```ignore
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::SelectQuery;
+    ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
     /// q.limit(12);
     ///
@@ -111,7 +173,11 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     }
 
     /// Return whether or not the `SelectQuery` has a limit
-    /// ```ignore
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::SelectQuery:
+    ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
     /// q.limit(12);
     /// assert!(q.has_limit);
@@ -127,9 +193,14 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     }
 
     /// Returns the value of the Limit of the `SelectQuery` if there is one
-    /// ```ignore
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::SelectQuery;
+    /// 
     /// let mut q = SelectQuery::select(&["user"]).from("users");
     /// assert_eq!(q.get_limit(), None);
+    /// 
     /// q.limit(12);
     /// assert_eq!(q.get_limit(), Some(12));
     /// ```
@@ -138,8 +209,14 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     }
 
     /// Removes the limit from the query
-    /// ```ignore
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::SelectQuery;
+    ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
+    /// 
+    /// // set the limit
     /// q.limit(42);
     /// assert_eq!(q.as_string(), "SELECT user FORM users LIMIT 42");
     ///
@@ -151,7 +228,11 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         self.limit = None;
     }
     /// Creates the string representation of the query
-    /// ```ignore
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::SelectQuery;
+    ///
     /// let mut q = SelectQuery::select(&["*"]).from("users");
     ///
     /// assert_eq!(q.as_string(), "SELECT * FROM users")
@@ -204,7 +285,7 @@ impl<'a> Display for InsertQuery<'a> {
 
 #[allow(unused_assignments)]
 impl<'a> InsertQuery<'a> {
-    /// Creates a new `InsertQuery` that inserts data in table specified by `table`
+    /// Creates a new `InsertQuery` that puts data into `table`.
     pub fn into(table: &'a str) -> InsertQuery<'a> {
         InsertQuery {
             into: table,
@@ -213,12 +294,16 @@ impl<'a> InsertQuery<'a> {
     }
 
     /// Returns a `String` that represents the `InsertQuery` in a valid SQL statement
+    /// ## Example
+    /// ```no_run
     ///
-    /// ```ignore
+    /// extern crate query_builder;
+    /// use query_builder::{Value, InsertQuery};
+    ///
     /// let mut q = InsertQuery::into("users");
     /// q.values.insert("name", Value::Varchar("greg"));
     ///
-    /// assert_eq!(q.as_string(), "INSERT INTO users(name) VALUES(greg)")
+    /// assert_eq!(q.as_string(), "INSERT INTO users(name) VALUES('greg')")
     /// ```
     pub fn as_string(&self) -> String {
         let mut res = String::new();
@@ -268,11 +353,39 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
     }
 
     /// Sets the limit of items to delete
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::{DeleteQuery, Value};
+    /// 
+    /// let mut query = DeleteQuery::from("users");
+    /// // add values to delete
+    /// query.whre.insert("name", Value::Varchar("gregory"));
+    /// 
+    /// // add the limit
+    /// query.limit(1);
+    /// 
+    /// // make sure the query looks like expected
+    /// assert_eq!(query.as_string(), "DELETE FROM users WHERE name = 'gregory' LIMIT 1");
+    /// ```
     pub fn limit(&mut self, limit: usize) {
         self.limit = Some(limit);
     }
 
     /// Returns the limit of the `DeleteQuery`
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::{DeleteQuery, Value};
+    /// 
+    /// // create query
+    /// let mut query = QueryBuilder::from("users");
+    /// 
+    /// // set the limit
+    /// query.limit(12);
+    /// 
+    /// assert_eq!(query.get_limit(), Some(12));
+    /// ```
     pub fn get_limit(&self) -> Option<usize> {
         self.limit
     }
@@ -333,6 +446,12 @@ impl<'a, 'c> UpdateQuery<'a, 'c> {
     }
 
     /// Set the limit of the Query to the value of `l`
+    /// ## Example
+    /// ```no_run
+    /// extern crate query_builder;
+    /// use query_builder::{UpdateQuery, Value};
+    /// 
+    /// let mut query 
     pub fn limit(&mut self, l: usize) {
         self.limit = Some(l);
     }
