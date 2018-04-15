@@ -3,14 +3,14 @@
 # Overview
 ## What is this?
 This is a Library written in pure Rust intended to be easy to use for creating SQL Queries.
-This is also a project I mainly started to improve my Rust skills. 
+This is also a project I mainly started to improve my Rust skills.
 
 # Usage
 In order to use this library add the line `query_builder = "*"` to the `[dependencies]` section of your `Cargo.toml`.
 Then in your code you can use `extern crate query_builder;` and access it with `use query_builder::*`
 
-Creating a basic query that selects data from a table you can use the following code: 
-```
+Creating a basic query that selects data from a table you can use the following code:
+```rust
 extern crate query_builder;
 use query_builder::query_builder::*;
 
@@ -23,4 +23,3 @@ fn main() {
     assert_eq!(query.as_string(), "SELECT user FROM users WHERE name = 'greg' LIMIT 1");
 }
 ```
-
