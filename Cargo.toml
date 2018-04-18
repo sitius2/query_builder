@@ -9,7 +9,7 @@ categories = ["database", "mysql", "sql", "queries"]
 repository = "https://github.com/sitius2/query_builder"
 
 [[test]]
-path = "tests/test.rs"
+path = "src/tests/test.rs"
 name = "query_test"
 
 [lib]

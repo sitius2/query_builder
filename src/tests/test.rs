@@ -34,6 +34,15 @@ mod tests {
     }
 
     #[test]
+    fn select_simple_order_by() {
+        let mut q  = SelectQuery::select(&["user"]).from("users");
+        
+        q.order_by(OrderBy::Row("name"));
+
+        assert_eq!(q.as_string(), "SELECT user FROM users ORDER BY name")
+    }
+
+    #[test]
     fn insert_simple() {
         let mut q = InsertQuery::into("users");
         q.values.insert("name", Value::Varchar("greg"));

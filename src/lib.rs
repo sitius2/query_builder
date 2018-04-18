@@ -101,6 +101,28 @@ impl<'c> Display for Value<'c> {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+/// Representing the way to Format the ORDER BY clause of some queries
+pub enum OrderBy<'b> {
+    Row(&'b str),
+    Expression(&'b str),
+}
+
+impl<'b> OrderBy<'b> {
+    pub fn as_string(&self) -> String {
+        match *self {
+            OrderBy::Row(r) => format!("ORDER BY {}", r),
+            OrderBy::Expression(e)  => format!("ORDER BY {}", e),
+        }
+    }
+}
+
+impl<'b> Display for OrderBy<'b> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult {
+        write!(f, "{}", self.as_string())
+    }
+}
+
 #[derive(Debug)]
 /// Struct representing a SQL-INSERT Query
 /// A simple query to select everything from a table can be created like this:
@@ -119,6 +141,7 @@ pub struct SelectQuery<'a, 'c> {
     from: &'a str,
     pub whre: BTreeMap<&'a str, Value<'c>>,
     limit: Option<usize>,
+    order_by: Option<OrderBy<'c>>
 }
 
 impl<'a, 'c> Display for SelectQuery<'a, 'c> {
@@ -140,6 +163,7 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
             from: "",
             whre: BTreeMap::new(),
             limit: None,
+            order_by: None,
         }
     }
 
@@ -227,6 +251,11 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     pub fn clear_limit(&mut self) {
         self.limit = None;
     }
+
+    /// Adds a ORDER BY clause to the query
+    pub fn order_by(&mut self, ob: OrderBy<'c>) {
+        self.order_by = Some(ob);
+    }
     /// Creates the string representation of the query
     /// ## Example
     /// ```no_run
@@ -263,6 +292,10 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
 
         if let Some(l) = self.limit {
             res = format!("{} LIMIT {}", res, l);
+        }
+
+        if let Some(ref ob) = self.order_by {
+            res = format!("{} {}", res, ob);
         }
 
         res
@@ -333,6 +366,7 @@ pub struct DeleteQuery<'a, 'c> {
     from: &'a str,
     pub whre: BTreeMap<&'a str, Value<'c>>,
     limit: Option<usize>,
+    order_by: Option<OrderBy<'c>>,
 }
 
 impl<'a, 'c> Display for DeleteQuery<'a, 'c> {
@@ -349,6 +383,7 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
             from: table,
             whre: BTreeMap::new(),
             limit: None,
+            order_by: None,
         }
     }
 
@@ -393,6 +428,16 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
     /// Removes the limit from the `DeleteQuery`
     pub fn clear_limit(&mut self) {
         self.limit = None;
+    }
+
+    /// Adds a ORDER BY clause to the query
+    pub fn order_by(&mut self, ob: OrderBy<'b>) {
+        self.order_by = Some(ob);
+    }
+
+    /// Removes the ORDER BY clause from the query
+    pub fn clear_order_by(&mut self) {
+        self.order_by = None;
     }
 
     /// Return a `String` representing the struct
