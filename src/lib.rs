@@ -101,6 +101,22 @@ impl<'c> Display for Value<'c> {
     }
 }
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
+/// Enum representing the ways to combine conditional parts of a query
+pub enum Condition {
+    And,
+    Or
+}
+
+impl Display for  Condition {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult {
+        match *self {
+            Condition::And  => write!(f, "AND"),
+            Condition::Or   => write!(f, "OR"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Representing the way to Format the ORDER BY clause of some queries
 pub enum OrderBy<'b> {
@@ -122,6 +138,74 @@ impl<'b> Display for OrderBy<'b> {
         write!(f, "{}", self.as_string())
     }
 }
+
+#[derive(Debug)]
+/// Struct representing an WHERE-Clause
+/// 
+/// 
+pub struct WhereClause<'a, 'b> {
+    tbl: &'a str,
+    cond: Value<'b>,
+    how: Condition,
+}
+
+impl<'a, 'b> WhereClause<'a, 'b> {
+    /// Creates a new WHERE-clause
+    /// 
+    /// If the Value of `how` is none when initializing the clause, [`Condition::And`]
+    /// is assumed and used for the clause.
+    /// 
+    /// 
+    /// 
+    /// *Note:* If the [`WhereClause`] is the first one to be inserted in the string of an query, 
+    /// the condition will be left out.
+    /// 
+    /// [`WhereClause`]: ./struct.WhereClause.html
+    /// [`Condition::And`]: ./enum.Condition.html
+    ///  
+    pub fn new(table: &'a str, cond: Value<'b>, how: Option<Condition>) -> WhereClause<'a, 'b> {
+        if let Some(c) = how {
+            WhereClause {
+                tbl: table,
+                cond: cond,
+                how: c
+            }
+        } else {
+            WhereClause {
+                tbl: table,
+                cond: cond,
+                how: Condition::And,
+            }
+        }
+    }
+
+    /// Returns a [`String`] representing the [`WhereClause`] with it's condition part
+    /// The returned [`String`] is also the default representation returned when calling the 
+    /// [`Display`] trait functions on this struct.
+    /// 
+    /// ```no_run
+    /// let wclause = WhereClause::new("user", Value::Varchar("gerald"), Condition::Or);
+    /// 
+    /// assert_eq!("OR user = 'gerald'")
+    /// ```
+    pub fn as_string(&self) -> String {
+        format!("{} {} = {}", self.cond, self.tbl, self.cond)
+    }
+
+    /// Returns a [`String`] representing the [`WhereClause`] without it's condition part
+    /// 
+    /// ```no_run
+    /// let clause = WhereClause::new("user", Value::Varchar("thomas"), None);
+    /// 
+    /// assert_eq!(clause.as_string_no_cond(), "user = 'thomas'")
+    /// ```
+    pub fn as_string_no_cond(&self) -> String {
+        format!("{} = {}", self.tbl, self.cond)
+    }
+    
+}
+
+
 
 #[derive(Debug)]
 /// Struct representing a SQL-INSERT Query
@@ -431,7 +515,7 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
     }
 
     /// Adds a ORDER BY clause to the query
-    pub fn order_by(&mut self, ob: OrderBy<'b>) {
+    pub fn order_by(&mut self, ob: OrderBy<'c>) {
         self.order_by = Some(ob);
     }
 
