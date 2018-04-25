@@ -8,8 +8,8 @@
 //! In your code write `extern crate query_builder` and `use query_builder::*` to
 //! import all structs and enums. <br>
 //! Finally creating the [`SelectQuery`] looks like this:
-//! ```no_run
-//! extern crate query_builder;
+//! 
+//! ```
 //! use query_builder::SelectQuery;
 //!
 //! let query = SelectQuery::select(&["*"]).from("users");
@@ -18,8 +18,8 @@
 //! ```
 //! <br>
 //! Creating a [`InsertQuery`] works similar:
-//! ```no_run
-//! extern crate query_buider;
+//! 
+//! ```
 //! use query_builder::{InsertQuery, Value};
 //!
 //! // create the basic query
@@ -59,10 +59,13 @@ pub enum Value<'c> {
 
 #[allow(unused_assignments)]
 impl<'c> Value<'c> {
-    /// Convert the Value to a `String`
-    /// ```no_run
-    /// extern crate query_builder;
+    /// Convert the Value to a [`String`]
+    /// 
+    /// ## Example
+    /// 
+    /// ```
     /// use query_builder::Value;
+    /// 
     /// // Put single quotes around the varchar to not conflict with e.g. MySQL when inserting data
     /// let v = Value::Varchar("steven");
     /// assert_eq!(v.as_string(), "'steven'");
@@ -75,6 +78,9 @@ impl<'c> Value<'c> {
     /// let v = Value::Int(42);
     /// assert_eq!(v.as_string(), "42");
     /// ```
+    /// 
+    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
+    /// 
     pub fn as_string(&self) -> String {
         match *self {
             Value::Varchar(v) => format!("'{}'", v),
@@ -161,7 +167,7 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// the condition will be left out.
     /// 
     /// [`WhereClause`]: ./struct.WhereClause.html
-    /// [`Condition::And`]: ./enum.Condition.html
+    /// [`Condition::And`]: ./enum.Condition.html#variant.And
     ///  
     pub fn new(table: &'a str, cond: Value<'b>, how: Option<Condition>) -> WhereClause<'a, 'b> {
         if let Some(c) = how {
@@ -183,39 +189,81 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// The returned [`String`] is also the default representation returned when calling the 
     /// [`Display`] trait functions on this struct.
     /// 
-    /// ```no_run
-    /// let wclause = WhereClause::new("user", Value::Varchar("gerald"), Condition::Or);
+    /// ## Example
     /// 
-    /// assert_eq!("OR user = 'gerald'")
     /// ```
+    /// use query_builder::{WhereClause, Condition, Value};
+    /// 
+    /// let wclause = WhereClause::new("user", Value::Varchar("gerald"), Some(Condition::Or));
+    /// 
+    /// assert_eq!(wclause.as_string(), "OR user = 'gerald'")
+    /// ```
+    /// 
+    /// [`WhereClause`]: ./struct.WhereClause.html
+    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
     pub fn as_string(&self) -> String {
-        format!("{} {} = {}", self.cond, self.tbl, self.cond)
+        format!("{} {} = {}", self.how, self.tbl, self.cond)
     }
 
     /// Returns a [`String`] representing the [`WhereClause`] without it's condition part
+    /// but with the `WHERE` phrase in the beginning
     /// 
-    /// ```no_run
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::{WhereClause, Value};
+    /// 
     /// let clause = WhereClause::new("user", Value::Varchar("thomas"), None);
     /// 
-    /// assert_eq!(clause.as_string_no_cond(), "user = 'thomas'")
+    /// assert_eq!(clause.as_string_no_cond_with_prefix(), "WHERE user = 'thomas'")
     /// ```
+    /// 
+    /// [`WhereClause`]: ./struct.WhereClause.html
+    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
+    pub fn as_string_no_cond_with_prefix(&self) -> String {
+        format!("WHERE {} = {}", self.tbl, self.cond)
+    }
+
+    /// Returns a [`String`] representing the [`WhereClause`] without `WHERE` prefix and 
+    /// without it's conditional parts
+    /// 
+    /// ## Example
+    /// ```
+    /// use query_builder::{WhereClause, Value};
+    /// 
+    /// let clause = WhereClause::new("user", Value::Varchar("jeanny"), None);
+    /// 
+    /// assert_eq!(clause.as_string_no_cond(), "user = 'jeanny'")
+    /// ```
+    /// 
+    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
+    /// [`WhereClause`] ./struct.WhereClause.html
     pub fn as_string_no_cond(&self) -> String {
         format!("{} = {}", self.tbl, self.cond)
     }
-    
+
 }
+
+impl<'a, 'b> Display for WhereClause<'a, 'b> {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult {
+        write!(f, "{}", self.as_string())
+    }
+} 
 
 
 
 #[derive(Debug)]
 /// Struct representing a SQL-INSERT Query
 /// A simple query to select everything from a table can be created like this:
-/// ```no_run
-/// extern crate query_builder;
+/// 
+/// ## Example 
+/// 
+/// ```
+/// 
 /// use query_builder::SelectQuery;
 ///
 /// // create the query
-/// let query = SelectQuery::select(&[*]).from("users");
+/// let query = SelectQuery::select(&["*"]).from("users");
 ///
 /// // make sure it looks like you would expect it to look
 /// assert_eq!(query.as_string(), "SELECT * FROM users");
@@ -223,7 +271,7 @@ impl<'a, 'b> WhereClause<'a, 'b> {
 pub struct SelectQuery<'a, 'c> {
     select: Vec<&'a str>,
     from: &'a str,
-    pub whre: BTreeMap<&'a str, Value<'c>>,
+    pub whre: Vec<WhereClause<'a, 'c>>,
     limit: Option<usize>,
     order_by: Option<OrderBy<'c>>
 }
@@ -240,12 +288,11 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// Creates a new [`SelectQuery`] that selects data from the row/s `rows`
     ///
     /// [`SelectQuery`]: ./struct.SelectQuery.html
-    ///
     pub fn select(rows: &[&'a str]) -> SelectQuery<'a, 'c> {
         SelectQuery {
             select: rows.to_vec(),
             from: "",
-            whre: BTreeMap::new(),
+            whre: Vec::new(),
             limit: None,
             order_by: None,
         }
@@ -253,11 +300,12 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
 
     /// Sets the table to select from to the value of `t`
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
+    /// 
     /// use query_builder::SelectQuery;
     ///
-    /// let mut q = SelectQuery::select(&["user"]).from("users");
+    /// let q = SelectQuery::select(&["user"]).from("users");
     ///
     /// assert_eq!(q.as_string(), "SELECT user FROM users")
     /// ```
@@ -265,10 +313,12 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         self.from = t;
         self
     }
+
     /// Sets the limit value of the Query to the value of `l`
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
+    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
@@ -280,18 +330,22 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         self.limit = Some(l);
     }
 
-    /// Return whether or not the `SelectQuery` has a limit
+    /// Return whether or not the [`SelectQuery`] has a limit
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
-    /// use query_builder::SelectQuery:
+    /// 
+    /// ```
+    /// 
+    /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
     /// q.limit(12);
-    /// assert!(q.has_limit);
+    /// 
+    /// assert!(q.has_limit());
+    /// 
     /// q.clear_limit();
-    /// assert!(!q.has_limit);
+    /// assert!(!q.has_limit());
     /// ```
+    /// [`SelectQuery`]: ./struct.SelectQuery.html
     pub fn has_limit(&self) -> bool {
         if let Some(_) = self.limit {
             return true;
@@ -300,10 +354,11 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         false
     }
 
-    /// Returns the value of the Limit of the `SelectQuery` if there is one
+    /// Returns the value of the Limit of the [`SelectQuery`] if there is one
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
+    /// 
     /// use query_builder::SelectQuery;
     /// 
     /// let mut q = SelectQuery::select(&["user"]).from("users");
@@ -312,24 +367,27 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// q.limit(12);
     /// assert_eq!(q.get_limit(), Some(12));
     /// ```
+    /// [`SelectQuery`]: ./struct.SelectQuery.html
     pub fn get_limit(&self) -> Option<usize> {
         self.limit
     }
 
     /// Removes the limit from the query
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
+    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
     /// 
     /// // set the limit
     /// q.limit(42);
-    /// assert_eq!(q.as_string(), "SELECT user FORM users LIMIT 42");
+    /// assert_eq!(q.as_string(), "SELECT user FROM users LIMIT 42");
     ///
     /// // clear limit
-    /// q.clear_limit()
+    /// q.clear_limit();
+    /// 
     /// assert_eq!(q.as_string(), "SELECT user FROM users");
     /// ```
     pub fn clear_limit(&mut self) {
@@ -342,8 +400,9 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     }
     /// Creates the string representation of the query
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
+    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["*"]).from("users");
@@ -366,11 +425,10 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         }
 
         if !self.whre.is_empty() {
-            let mut keys = self.whre.keys();
-            let key = keys.next().unwrap();
-            res = format!("{} WHERE {} = {}", res, key, self.whre[key].as_string());
-            for k in keys {
-                res = format!("{} AND {} = {}", res, k, self.whre[k]);
+            let c = &self.whre[0];
+            res = format!("{} {}", res, c.as_string_no_cond_with_prefix());
+            for clause in &self.whre[1..] {
+                res = format!("{} {}", res, clause);
             }
         }
 
@@ -412,9 +470,8 @@ impl<'a> InsertQuery<'a> {
 
     /// Returns a `String` that represents the `InsertQuery` in a valid SQL statement
     /// ## Example
-    /// ```no_run
+    /// ```
     ///
-    /// extern crate query_builder;
     /// use query_builder::{Value, InsertQuery};
     ///
     /// let mut q = InsertQuery::into("users");
@@ -448,7 +505,7 @@ impl<'a> InsertQuery<'a> {
 /// Struct representing a SQL Delete Statement
 pub struct DeleteQuery<'a, 'c> {
     from: &'a str,
-    pub whre: BTreeMap<&'a str, Value<'c>>,
+    pub whre: Vec<WhereClause<'a, 'c>>,
     limit: Option<usize>,
     order_by: Option<OrderBy<'c>>,
 }
@@ -461,11 +518,13 @@ impl<'a, 'c> Display for DeleteQuery<'a, 'c> {
 
 #[allow(unused_assignments)]
 impl<'a, 'c> DeleteQuery<'a, 'c> {
-    /// Return a new `DeleteQuery` that deletes data from table `table`
+    /// Return a new [`DeleteQuery`] that deletes data from table `table`
+    /// 
+    /// [`DeleteQuery`]: ./struct.DeleteQuery.html
     pub fn from(table: &'a str) -> DeleteQuery {
         DeleteQuery {
             from: table,
-            whre: BTreeMap::new(),
+            whre: Vec::new(),
             limit: None,
             order_by: None,
         }
@@ -473,13 +532,13 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
 
     /// Sets the limit of items to delete
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
-    /// use query_builder::{DeleteQuery, Value};
+    /// 
+    /// ```
+    /// use query_builder::{DeleteQuery, Value, WhereClause};
     /// 
     /// let mut query = DeleteQuery::from("users");
     /// // add values to delete
-    /// query.whre.insert("name", Value::Varchar("gregory"));
+    /// query.whre.push(WhereClause::new("name", Value::Varchar("gregory"), None));
     /// 
     /// // add the limit
     /// query.limit(1);
@@ -491,25 +550,46 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
         self.limit = Some(limit);
     }
 
-    /// Returns the limit of the `DeleteQuery`
+    /// Returns the limit of the [`DeleteQuery`]
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
     /// use query_builder::{DeleteQuery, Value};
     /// 
     /// // create query
-    /// let mut query = QueryBuilder::from("users");
+    /// let mut query = DeleteQuery::from("users");
     /// 
     /// // set the limit
     /// query.limit(12);
     /// 
     /// assert_eq!(query.get_limit(), Some(12));
     /// ```
+    /// 
+    /// [`DeleteQuery`]: ./struct.DeleteQuery.html
     pub fn get_limit(&self) -> Option<usize> {
         self.limit
     }
 
-    /// Removes the limit from the `DeleteQuery`
+    /// Removes the limit from the [`DeleteQuery`]
+    /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::DeleteQuery;
+    /// 
+    /// let mut query = DeleteQuery::from("users");
+    /// /* add limit to the query */
+    /// query.limit(12);
+    /// 
+    /// assert_eq!(query.get_limit(), Some(12));
+    /// 
+    /// /* clear the limit */
+    /// query.clear_limit();
+    /// 
+    /// assert_eq!(query.get_limit(), None);
+    /// 
+    /// ```
+    /// [`DeleteQuery`]: ./struct.DeleteQuery.html
     pub fn clear_limit(&mut self) {
         self.limit = None;
     }
@@ -531,11 +611,11 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
         res = format!("DELETE FROM {}", self.from);
 
         if !self.whre.is_empty() {
-            let mut keys = self.whre.keys();
-            let key = keys.next().unwrap();
-            res = format!("{} WHERE {} = {}", res, key, self.whre[key]);
-            for k in keys {
-                res = format!("{} AND {} = {}", res, k, self.whre[k]);
+            /* get the first element from the vector */
+            let c = &self.whre[0];
+            res = format!("{} {}", res, c.as_string_no_cond_with_prefix());
+            for clause in &self.whre[1..] {
+                res = format!("{} {}", res, clause);
             }
         }
 
@@ -551,8 +631,14 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
 /// Struct representing an SQL Update statement
 pub struct UpdateQuery<'a, 'c> {
     update: &'a str,
+    /// A Map containing the field to set with the appropiate values to them
     pub set: BTreeMap<&'a str, Value<'c>>,
-    pub whre: BTreeMap<&'a str, Value<'c>>,
+    /// All [`WhereClause`]s for conditional Updating in this 
+    /// [`UpdateQuery`]
+    /// 
+    /// [`WhereClause`]: ./struct.WhereClause.html
+    /// [`UpdateQuery`]: ./struct.UpdateQuery.html
+    pub whre: Vec<WhereClause<'a, 'c>>,
     limit: Option<usize>,
 }
 
@@ -564,23 +650,32 @@ impl<'a, 'c> Display for UpdateQuery<'a, 'c> {
 
 #[allow(unused_assignments)]
 impl<'a, 'c> UpdateQuery<'a, 'c> {
-    /// Returns a new `UpdateQuery` that updates the table `table`
+    /// Returns a new [`UpdateQuery`] that updates the table `table`
+    /// 
+    /// [`UpdateQuery`]: ./struct.UpdateQuery.html
     pub fn update(table: &'a str) -> UpdateQuery {
         UpdateQuery {
             update: table,
             set: BTreeMap::new(),
-            whre: BTreeMap::new(),
+            whre: Vec::new(),
             limit: None,
         }
     }
 
     /// Set the limit of the Query to the value of `l`
     /// ## Example
-    /// ```no_run
-    /// extern crate query_builder;
+    /// 
+    /// ```
+    /// 
     /// use query_builder::{UpdateQuery, Value};
     /// 
-    /// let mut query 
+    /// let mut query = UpdateQuery::update("users");
+    /// // set the limit
+    /// query.limit(12);
+    /// 
+    /// // assert that the limit is actually there
+    /// assert_eq!(query.get_limit(), Some(12))
+    /// ```
     pub fn limit(&mut self, l: usize) {
         self.limit = Some(l);
     }
@@ -598,7 +693,9 @@ impl<'a, 'c> UpdateQuery<'a, 'c> {
         self.limit
     }
 
-    /// Returns the String representation of the `UpdateQuery`
+    /// Returns the String representation of the [`UpdateQuery`]
+    /// 
+    /// [`UpdateQuery`]: ./struct.UpateQuery.html
     pub fn as_string(&self) -> String {
         let mut res = String::new();
 
@@ -616,13 +713,10 @@ impl<'a, 'c> UpdateQuery<'a, 'c> {
         }
 
         if !self.whre.is_empty() {
-            let mut keys = self.whre.keys();
-            let key = keys.next().unwrap();
-
-            res = format!("{} WHERE {} = {}", res, key, self.whre[key]);
-
-            for k in keys {
-                res = format!("{} AND {} = {}", res, k, self.whre[k]);
+            let c = &self.whre[0];
+            res = format!("{} {}", res, c.as_string_no_cond_with_prefix());
+            for clause in &self.whre[1..] {
+                res = format!("{} {}", res, clause);
             }
         }
 

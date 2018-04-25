@@ -13,7 +13,7 @@ mod tests {
     #[test]
     fn select_simple_where() {
         let mut q = SelectQuery::select(&["user, name"]).from("users");
-        q.whre.insert("name", Value::Varchar("ezio"));
+        q.whre.push(WhereClause::new("name", Value::Varchar("ezio"), None));
 
         assert_eq!(
             q.as_string(),
@@ -24,7 +24,7 @@ mod tests {
     #[test]
     fn select_simple_where_limt() {
         let mut q = SelectQuery::select(&["user"]).from("users");
-        q.whre.insert("name", Value::Varchar("connor"));
+        q.whre.push(WhereClause::new("name", Value::Varchar("connor"), None));
         q.limit(42);
 
         assert_eq!(
@@ -53,7 +53,7 @@ mod tests {
     #[test]
     fn delete_simple() {
         let mut q = DeleteQuery::from("users");
-        q.whre.insert("name", Value::Varchar("george"));
+        q.whre.push(WhereClause::new("name", Value::Varchar("george"), None));
 
         assert_eq!(q.as_string(), "DELETE FROM users WHERE name = 'george'")
     }
@@ -78,7 +78,7 @@ mod tests {
     fn update_simple_where() {
         let mut q = UpdateQuery::update("users");
         q.set.insert("name", Value::Varchar("george"));
-        q.whre.insert("name", Value::Varchar("steve"));
+        q.whre.push(WhereClause::new("name", Value::Varchar("steve"), None));
 
         assert_eq!(
             q.as_string(),
@@ -90,7 +90,7 @@ mod tests {
     fn update_simple_where_limit() {
         let mut q = UpdateQuery::update("users");
         q.set.insert("name", Value::Varchar("george"));
-        q.whre.insert("name", Value::Varchar("steve"));
+        q.whre.push(WhereClause::new("name", Value::Varchar("steve"), None));
         q.limit(1);
 
         assert_eq!(
