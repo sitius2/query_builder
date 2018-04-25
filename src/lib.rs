@@ -79,7 +79,7 @@ impl<'c> Value<'c> {
     /// assert_eq!(v.as_string(), "42");
     /// ```
     /// 
-    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
     /// 
     pub fn as_string(&self) -> String {
         match *self {
@@ -200,7 +200,8 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// ```
     /// 
     /// [`WhereClause`]: ./struct.WhereClause.html
-    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
+    /// [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
     pub fn as_string(&self) -> String {
         format!("{} {} = {}", self.how, self.tbl, self.cond)
     }
@@ -219,7 +220,7 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// ```
     /// 
     /// [`WhereClause`]: ./struct.WhereClause.html
-    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
     pub fn as_string_no_cond_with_prefix(&self) -> String {
         format!("WHERE {} = {}", self.tbl, self.cond)
     }
@@ -228,6 +229,7 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// without it's conditional parts
     /// 
     /// ## Example
+    /// 
     /// ```
     /// use query_builder::{WhereClause, Value};
     /// 
@@ -236,8 +238,8 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// assert_eq!(clause.as_string_no_cond(), "user = 'jeanny'")
     /// ```
     /// 
-    /// [`String`]: doc.rust-lang.org/std/string/struct.String.html
-    /// [`WhereClause`] ./struct.WhereClause.html
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
+    /// [`WhereClause`]: ./struct.WhereClause.html
     pub fn as_string_no_cond(&self) -> String {
         format!("{} = {}", self.tbl, self.cond)
     }
@@ -259,7 +261,6 @@ impl<'a, 'b> Display for WhereClause<'a, 'b> {
 /// ## Example 
 /// 
 /// ```
-/// 
 /// use query_builder::SelectQuery;
 ///
 /// // create the query
@@ -302,7 +303,6 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let q = SelectQuery::select(&["user"]).from("users");
@@ -318,7 +318,6 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
@@ -334,7 +333,6 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
@@ -358,7 +356,6 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::SelectQuery;
     /// 
     /// let mut q = SelectQuery::select(&["user"]).from("users");
@@ -376,7 +373,6 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["user"]).from("users");
@@ -402,7 +398,6 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::SelectQuery;
     ///
     /// let mut q = SelectQuery::select(&["*"]).from("users");
@@ -460,7 +455,9 @@ impl<'a> Display for InsertQuery<'a> {
 
 #[allow(unused_assignments)]
 impl<'a> InsertQuery<'a> {
-    /// Creates a new `InsertQuery` that puts data into `table`.
+    /// Creates a new [`InsertQuery`] that puts data into `table`.
+    /// 
+    /// [`InsertQuery`]: ./struct.InsertQuery.html
     pub fn into(table: &'a str) -> InsertQuery<'a> {
         InsertQuery {
             into: table,
@@ -468,10 +465,9 @@ impl<'a> InsertQuery<'a> {
         }
     }
 
-    /// Returns a `String` that represents the `InsertQuery` in a valid SQL statement
+    /// Returns a [`String`] that represents the [`InsertQuery`] in a valid SQL statement
     /// ## Example
     /// ```
-    ///
     /// use query_builder::{Value, InsertQuery};
     ///
     /// let mut q = InsertQuery::into("users");
@@ -479,6 +475,9 @@ impl<'a> InsertQuery<'a> {
     ///
     /// assert_eq!(q.as_string(), "INSERT INTO users(name) VALUES('greg')")
     /// ```
+    /// 
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
+    /// [`InsertQuery`]: ./struct.InsertQuery.html
     pub fn as_string(&self) -> String {
         let mut res = String::new();
         let (mut vals, mut vals_list) = (String::new(), String::new());
@@ -594,9 +593,45 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
         self.limit = None;
     }
 
-    /// Adds a ORDER BY clause to the query
+    /// Adds a [`OrderBy`] clause to the query
+    /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::{DeleteQuery, OrderBy};
+    /// 
+    /// let mut query = DeleteQuery::from("continents");
+    /// query.order_by(OrderBy::Row("population"));
+    /// 
+    /// assert_eq!(query.as_string(), "DELETE FROM continents ORDER BY population");
+    /// ```
+    /// [`OrderBy`]: ./enum.OrderBy.html
     pub fn order_by(&mut self, ob: OrderBy<'c>) {
         self.order_by = Some(ob);
+    }
+
+    /// Returns either `true` or `false` depending on whether
+    /// or not the [`DeleteQuery`] contains a [`OrderBy`] clause
+    /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::{DeleteQuery, OrderBy};
+    /// 
+    /// let mut query = DeleteQuery::from("states");
+    /// query.order_by(OrderBy::Row("population"));
+    /// 
+    /// assert!(query.is_ordered());
+    /// ```
+    /// [`DeleteQuery`]: ./struct.DeleteQuery.html
+    /// [`OrderBy`]: ./enum.OrderBy.html
+    pub fn is_ordered(&self) -> bool {
+        if let Some(_) = self.order_by {
+            true
+        }
+        else {
+            false
+        }
     }
 
     /// Removes the ORDER BY clause from the query
@@ -604,7 +639,23 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
         self.order_by = None;
     }
 
-    /// Return a `String` representing the struct
+    /// Return a [`String`] representing the [`DeleteQuery`]
+    /// 
+    /// ## Example
+    /// ```
+    /// use query_builder::{DeleteQuery, Value, WhereClause, Condition};
+    /// 
+    /// // create basic query
+    /// let mut query = DeleteQuery::from("people");
+    /// 
+    /// // set parameter of the query
+    /// query.whre.push(WhereClause::new("name", Value::Varchar("justine"), None));
+    /// query.whre.push(WhereClause::new("age", Value::Int(24), Some(Condition::And)));
+    /// query.limit(1);
+    /// 
+    /// assert_eq!(query.as_string(), "DELETE FROM people WHERE name = 'justine' AND age = 24 LIMIT 1");
+    /// ```
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
     pub fn as_string(&self) -> String {
         let mut res = String::new();
 
@@ -617,6 +668,10 @@ impl<'a, 'c> DeleteQuery<'a, 'c> {
             for clause in &self.whre[1..] {
                 res = format!("{} {}", res, clause);
             }
+        }
+
+        if let Some(ref o) = self.order_by {
+            res = format!("{} {}", res, o);
         }
 
         if let Some(l) = self.limit {
@@ -652,6 +707,16 @@ impl<'a, 'c> Display for UpdateQuery<'a, 'c> {
 impl<'a, 'c> UpdateQuery<'a, 'c> {
     /// Returns a new [`UpdateQuery`] that updates the table `table`
     /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::UpdateQuery;
+    /// 
+    /// let query = UpdateQuery::update("town");
+    /// 
+    /// assert_eq!(query.as_string(), "UPDATE town");
+    /// ```
+    /// 
     /// [`UpdateQuery`]: ./struct.UpdateQuery.html
     pub fn update(table: &'a str) -> UpdateQuery {
         UpdateQuery {
@@ -666,7 +731,6 @@ impl<'a, 'c> UpdateQuery<'a, 'c> {
     /// ## Example
     /// 
     /// ```
-    /// 
     /// use query_builder::{UpdateQuery, Value};
     /// 
     /// let mut query = UpdateQuery::update("users");
@@ -680,7 +744,23 @@ impl<'a, 'c> UpdateQuery<'a, 'c> {
         self.limit = Some(l);
     }
 
-    /// Returns whether or not the `UpdateQuery` has a limit
+    /// Returns whether or not the [`UpdateQuery`] has a limit
+    /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::UpdateQuery;
+    ///  
+    /// // create the query
+    /// let mut query = UpdateQuery::update("cities");
+    /// 
+    /// assert_eq!(query.has_limit(), false);
+    /// 
+    /// // set limit
+    /// query.limit(1);
+    /// assert_eq!(query.has_limit(), true);
+    /// ```
+    /// [`UpdateQuery`]: ./struct.UpdateQuery.html
     pub fn has_limit(&self) -> bool {
         if let Some(_) = self.limit {
             return true;
@@ -688,14 +768,42 @@ impl<'a, 'c> UpdateQuery<'a, 'c> {
 
         false
     }
-    /// Returns the limit of the `UpdateQuery` if there is one
+    /// Returns the limit of the [`UpdateQuery`] if there is one
+    /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::UpdateQuery;
+    /// // create the query
+    /// let mut query = UpdateQuery::update("countries");
+    /// 
+    /// assert_eq!(query.get_limit(), None);
+    /// 
+    /// // set the limit
+    /// query.limit(12);
+    /// assert_eq!(query.get_limit(), Some(12));
+    /// ```
+    /// [`UpdateQuery`]: ./struct.UpdateQuery.html
     pub fn get_limit(&self) -> Option<usize> {
         self.limit
     }
 
-    /// Returns the String representation of the [`UpdateQuery`]
+    /// Returns the [`String`] representation of the [`UpdateQuery`]
     /// 
+    /// ## Example
+    /// 
+    /// ```
+    /// use query_builder::{UpdateQuery, Value};
+    /// 
+    /// let mut query = UpdateQuery::update("users");
+    /// 
+    /// query.set.insert("name", Value::Varchar("jeff")); 
+    /// query.limit(1);
+    /// 
+    /// assert_eq!(query.as_string(),"UPDATE users SET name = 'jeff' LIMIT 1");
+    /// ```
     /// [`UpdateQuery`]: ./struct.UpateQuery.html
+    /// [`String`]: https://doc.rust-lang.org/std/string/struct.String.html
     pub fn as_string(&self) -> String {
         let mut res = String::new();
 
