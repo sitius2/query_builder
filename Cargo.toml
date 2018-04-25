@@ -1,6 +1,6 @@
 [package]
 name = "query_builder"
-version = "0.2.1"
+version = "0.3.1"
 authors = ["sitius2"]
 license = "MIT"
 description = "Easy to use library for creating SQL-Statements"
