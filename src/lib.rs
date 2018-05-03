@@ -124,13 +124,22 @@ impl Display for  Condition {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
-/// Representing the way to Format the ORDER BY clause of some queries
+/// Representing the way to format the ORDER BY clause of some queries
 pub enum OrderBy<'b> {
     Row(&'b str),
     Expression(&'b str),
 }
 
 impl<'b> OrderBy<'b> {
+    /// Display the [`OrderBy`] clause as a [`String`]
+    /// Currently it doesen't matter if you used [`OrderBy::Row`] or
+    /// [`OrderBy::Expression`] as both result in the exat same [`String`] though
+    /// this might change in the future
+    /// 
+    /// [`OrderBy`]: ./enum.OrderBy.html
+    /// [`String`]: https://www.doc.rust-lang.org/std/string/struct.String.html
+    /// [`OrderBy::Row`]: ./enum.OrderBy.html#variant.Row
+    /// [`OrderBy::Expression`]: ./enum.OrderBy.html#variant.Expression
     pub fn as_string(&self) -> String {
         match *self {
             OrderBy::Row(r) => format!("ORDER BY {}", r),
@@ -442,8 +451,27 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
 
 #[derive(Debug)]
 /// Struct representing an SQL Insert Statement
+/// 
+/// Creating a query that works requires at least to function calls.
+/// 
+/// ## Examples
+/// 
+/// ```
+/// use query_builder::{InsertQuery, Value};
+/// 
+/// // construct the InsertQuery to insert into table 'users'
+/// let mut q = InsertQuery::into("users");
+/// 
+/// // add the value 'jonathan' to be added into the row 'name'
+/// q.values.insert("name", Value::Varchar("jonathan"));
+/// 
+/// assert_eq!(q.as_string(), "INSERT INTO users(name) VALUES('jonathan')");
+/// ```
+/// 
 pub struct InsertQuery<'a> {
     into: &'a str,
+    /// A map of the values to inserted into the table. 
+    /// The map is intended to be <row, value>
     pub values: BTreeMap<&'a str, Value<'a>>,
 }
 
