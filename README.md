@@ -5,6 +5,12 @@
 This is a Library written in pure Rust intended to be easy to use for creating SQL Queries.
 This is also a project I mainly started to improve my Rust skills.
 
+This is NOT a way to interact with any database, it just provides (or in some cases at least tries)
+to provide SQL-Queries that conform to the language specification.
+There is absolutely no warranty that things will work as expected as the interpretation
+of the resulting queries may differ depending on what database is used
+
+
 # Usage
 In order to use this library add the line `query_builder = "*"` to the `[dependencies]` section of your `Cargo.toml`.
 Then in your code you can use `extern crate query_builder;` and access it with `use query_builder::*`
@@ -15,7 +21,7 @@ extern crate query_builder;
 use query_builder::query_builder::*;
 
 fn main() {
-    let mut query = SelectQuery::select(&["user"]).from("users");
+    let mut query = SelectQuery::select(&["user"]).from(&["users"]);
 
     query.whre.insert("name", Value::Varchar("greg"));
     query.limit(1);
@@ -23,3 +29,9 @@ fn main() {
     assert_eq!(query.as_string(), "SELECT user FROM users WHERE name = 'greg' LIMIT 1");
 }
 ```
+
+
+# Features
+ - Creation of basic queries (SELECT this FROM that)
+ - Conditions (SELECT this FROM that WHERE condition = true)
+ - 

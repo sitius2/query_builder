@@ -5,14 +5,14 @@ mod tests {
 	use self::query_builder::*;
 	#[test]
     fn select_simple() {
-        let q = SelectQuery::select(&["user"]).from("users");
+        let q = SelectQuery::select(&["user"]).from(&["users"]);
 
         assert_eq!(q.as_string(), "SELECT user FROM users")
     }
 
     #[test]
     fn select_simple_where() {
-        let mut q = SelectQuery::select(&["user, name"]).from("users");
+        let mut q = SelectQuery::select(&["user, name"]).from(&["users"]);
         q.whre.push(WhereClause::new("name", Value::Varchar("ezio"), None));
 
         assert_eq!(
@@ -23,7 +23,7 @@ mod tests {
 
     #[test]
     fn select_simple_where_limt() {
-        let mut q = SelectQuery::select(&["user"]).from("users");
+        let mut q = SelectQuery::select(&["user"]).from(&["users"]);
         q.whre.push(WhereClause::new("name", Value::Varchar("connor"), None));
         q.limit(42);
 
@@ -35,7 +35,7 @@ mod tests {
 
     #[test]
     fn select_simple_order_by() {
-        let mut q  = SelectQuery::select(&["user"]).from("users");
+        let mut q  = SelectQuery::select(&["user"]).from(&["users"]);
         
         q.order_by(OrderBy::Row("name"));
 

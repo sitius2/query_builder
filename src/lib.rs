@@ -12,7 +12,7 @@
 //! ```
 //! use query_builder::SelectQuery;
 //!
-//! let query = SelectQuery::select(&["*"]).from("users");
+//! let query = SelectQuery::select(&["*"]).from(&["users"]);
 //! // make sure the query looks like expected
 //! assert_eq!(query.as_string(), "SELECT * FROM users");
 //! ```
@@ -32,7 +32,7 @@
 //! ```
 //! <br>
 //! More detailed explanations and examples can be found at the corresponding sections
-//! to the structs and enums
+//! about the structs and enums
 //!
 //! [`SelectQuery`]: ./struct.SelectQuery.html
 //! [`InsertQuery`]: ./struct.InsertQuery.html
@@ -42,6 +42,7 @@
 // std imports
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter, Result as FormatResult};
+
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Enum representing common SQL-datatypes
 pub enum Value<'c> {
@@ -133,7 +134,7 @@ pub enum OrderBy<'b> {
 impl<'b> OrderBy<'b> {
     /// Display the [`OrderBy`] clause as a [`String`]
     /// Currently it doesen't matter if you used [`OrderBy::Row`] or
-    /// [`OrderBy::Expression`] as both result in the exat same [`String`] though
+    /// [`OrderBy::Expression`] as both result in the exact same [`String`] though
     /// this might change in the future
     /// 
     /// [`OrderBy`]: ./enum.OrderBy.html
@@ -170,10 +171,8 @@ impl<'a, 'b> WhereClause<'a, 'b> {
     /// If the Value of `how` is none when initializing the clause, [`Condition::And`]
     /// is assumed and used for the clause.
     /// 
-    /// 
-    /// 
     /// *Note:* If the [`WhereClause`] is the first one to be inserted in the string of an query, 
-    /// the condition will be left out.
+    /// the condition will be ignored.
     /// 
     /// [`WhereClause`]: ./struct.WhereClause.html
     /// [`Condition::And`]: ./enum.Condition.html#variant.And
@@ -265,6 +264,7 @@ impl<'a, 'b> Display for WhereClause<'a, 'b> {
 
 #[derive(Debug)]
 /// Struct representing a SQL-INSERT Query
+/// 
 /// A simple query to select everything from a table can be created like this:
 /// 
 /// ## Example 
@@ -273,14 +273,15 @@ impl<'a, 'b> Display for WhereClause<'a, 'b> {
 /// use query_builder::SelectQuery;
 ///
 /// // create the query
-/// let query = SelectQuery::select(&["*"]).from("users");
+/// let query = SelectQuery::select(&["*"]).from(&["users"]);
 ///
 /// // make sure it looks like you would expect it to look
 /// assert_eq!(query.as_string(), "SELECT * FROM users");
 /// ```
 pub struct SelectQuery<'a, 'c> {
     select: Vec<&'a str>,
-    from: &'a str,
+    distinct: bool,
+    from: Vec<&'a str>,
     pub whre: Vec<WhereClause<'a, 'c>>,
     limit: Option<usize>,
     order_by: Option<OrderBy<'c>>
@@ -301,25 +302,29 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     pub fn select(rows: &[&'a str]) -> SelectQuery<'a, 'c> {
         SelectQuery {
             select: rows.to_vec(),
-            from: "",
+            distinct: false,
+            from: Vec::new(),
             whre: Vec::new(),
             limit: None,
             order_by: None,
         }
     }
 
-    /// Sets the table to select from to the value of `t`
+    /// Sets the table(s) to select from to the value of `t`
     /// ## Example
     /// 
     /// ```
     /// use query_builder::SelectQuery;
     ///
-    /// let q = SelectQuery::select(&["user"]).from("users");
-    ///
-    /// assert_eq!(q.as_string(), "SELECT user FROM users")
+    /// let q = SelectQuery::select(&["user"]).from(&["users"]);
+    /// assert_eq!(q.as_string(), "SELECT user FROM users");
+    /// 
+    /// let q = SelectQuery::select(&["user", "password"]).from(&["users", "data"]);
+    /// 
+    /// assert_eq!(q.as_string(), "SELECT user, password FROM users, data")
     /// ```
-    pub fn from(mut self, t: &'a str) -> Self {
-        self.from = t;
+    pub fn from(mut self, t: &[&'a str]) -> Self {
+        self.from = t.to_vec();
         self
     }
 
@@ -329,7 +334,7 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ```
     /// use query_builder::SelectQuery;
     ///
-    /// let mut q = SelectQuery::select(&["user"]).from("users");
+    /// let mut q = SelectQuery::select(&["user"]).from(&["users"]);
     /// q.limit(12);
     ///
     /// assert_eq!(q.as_string(), "SELECT user FROM users LIMIT 12")
@@ -344,7 +349,7 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ```
     /// use query_builder::SelectQuery;
     ///
-    /// let mut q = SelectQuery::select(&["user"]).from("users");
+    /// let mut q = SelectQuery::select(&["user"]).from(&["users"]);
     /// q.limit(12);
     /// 
     /// assert!(q.has_limit());
@@ -367,7 +372,7 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ```
     /// use query_builder::SelectQuery;
     /// 
-    /// let mut q = SelectQuery::select(&["user"]).from("users");
+    /// let mut q = SelectQuery::select(&["user"]).from(&["users"]);
     /// assert_eq!(q.get_limit(), None);
     /// 
     /// q.limit(12);
@@ -384,7 +389,7 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     /// ```
     /// use query_builder::SelectQuery;
     ///
-    /// let mut q = SelectQuery::select(&["user"]).from("users");
+    /// let mut q = SelectQuery::select(&["user"]).from(&["users"]);
     /// 
     /// // set the limit
     /// q.limit(42);
@@ -403,13 +408,24 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
     pub fn order_by(&mut self, ob: OrderBy<'c>) {
         self.order_by = Some(ob);
     }
+
+    /// Add or remove `DISTINCT` to the query
+    pub fn distinct(&mut self, is_distinct: bool) {
+        self.distinct = is_distinct;
+    }
+
+    /// Returns whether or not the query is using `DISTINCT`
+    pub fn is_distinct(&mut self) -> bool {
+        self.distinct
+    }
+
     /// Creates the string representation of the query
     /// ## Example
     /// 
     /// ```
     /// use query_builder::SelectQuery;
     ///
-    /// let mut q = SelectQuery::select(&["*"]).from("users");
+    /// let mut q = SelectQuery::select(&["*"]).from(&["users"]);
     ///
     /// assert_eq!(q.as_string(), "SELECT * FROM users")
     /// ```
@@ -424,8 +440,13 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
             }
         }
 
-        if self.from.len() > 1 {
-            res = format!("{} FROM {}", res, self.from);
+        if !self.from.is_empty() {
+            res = format!("{} FROM {}", res, self.from[0]);
+            if self.from.len() > 1 {
+                for f in self.from[1..].iter() {
+                    res = format!("{}, {}", res, f);
+                }
+            }
         }
 
         if !self.whre.is_empty() {
@@ -445,6 +466,36 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
         }
 
         res
+    }
+
+    /// Returns a tuple containing
+    /// - a [`String`] representing a prepared statement
+    /// - and a[`Vector`] containing all required values in the required order
+    /// 
+    /// This function is still under development and may not work 100% all the 
+    /// time so be careful when using it
+    /// 
+    /// ```
+    /// use query_builder::SelectQuery;
+    /// 
+    /// let mut q = SelectQuery::select(&["country"]).from(&["users"]);
+    /// 
+    /// assert_eq!(("SELECT ? FROM ?", {"country", "users"}), q.as_prepared())
+    /// ```
+    pub fn as_prepared(&mut self) -> (String, Vec<String>) {
+        let mut res_string: String = String::new();
+        let mut res_values: Vec<String> = Vec::new();
+        res_string = "SELECT".to_string();
+        if self.distinct {
+            res_string = format!("{} DISTINCT", res_string);
+        }
+
+        if !self.select.is_empty() {
+            res_string = format!("{} ?", res_string);
+            res_values.append(self.select[0].to_owned());
+        }
+
+        (res_string, res_values)
     }
 }
 
@@ -471,8 +522,9 @@ impl<'a, 'c> SelectQuery<'a, 'c> {
 pub struct InsertQuery<'a> {
     into: &'a str,
     /// A map of the values to inserted into the table. 
-    /// The map is intended to be <row, value>
+    /// The map is intended to be [row, value]
     pub values: BTreeMap<&'a str, Value<'a>>,
+    ignore: bool,
 }
 
 impl<'a> Display for InsertQuery<'a> {
@@ -489,9 +541,14 @@ impl<'a> InsertQuery<'a> {
     pub fn into(table: &'a str) -> InsertQuery<'a> {
         InsertQuery {
             into: table,
+            ignore: false,
             values: BTreeMap::new(),
         }
     }
+
+    pub fn ignore(&mut self, i: bool) {
+        self.ignore = i;
+    } 
 
     /// Returns a [`String`] that represents the [`InsertQuery`] in a valid SQL statement
     /// ## Example
@@ -510,7 +567,11 @@ impl<'a> InsertQuery<'a> {
         let mut res = String::new();
         let (mut vals, mut vals_list) = (String::new(), String::new());
 
-        res = format!("INSERT INTO {}", self.into);
+        if !self.ignore {
+            res = format!("INSERT INTO {}", self.into);
+        } else {
+            res = format!("INSERT IGNORE INTO {}", self.into);
+        }
 
         if !self.values.is_empty() {
             let mut keys = self.values.keys();
